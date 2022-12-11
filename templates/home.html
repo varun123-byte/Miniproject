@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8">
+    
+    
+    <title>Recommender System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body{
+  background-image:url('https://www.slidescarnival.com/wp-content/uploads/2019/09/slidescarnival-background-image.png');
+  padding: 0 20px;
+}
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: inherit;
+  color: white;
+  text-align: center;
+}
+
+::selection{
+  color: #fff;
+  background: #664AFF;
+}
+
+.wrapper{
+  max-width: 450px;
+  margin: 150px auto;
+}
+
+.wrapper .search-input{
+  background: #fff;
+  width: 100%;
+  border-radius: 5px;
+  position: relative;
+  box-shadow: 0px 1px 5px 3px rgba(0,0,0,0.12);
+}
+
+.search-input input{
+  height: 55px;
+  width: 100%;
+  outline: none;
+  border: none;
+  border-radius: 5px;
+  padding: 0 60px 0 20px;
+  font-size: 18px;
+  box-shadow: 0px 1px 5px rgba(0,0,0,0.1);
+}
+
+.search-input.active input{
+  border-radius: 5px 5px 0 0;
+}
+
+.search-input .autocom-box{
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.search-input.active .autocom-box{
+  padding: 10px 8px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.autocom-box li{
+  list-style: none;
+  padding: 8px 12px;
+  display: none;
+  width: 100%;
+  cursor: default;
+  border-radius: 3px;
+}
+
+.search-input.active .autocom-box li{
+  display: block;
+}
+.autocom-box li:hover{
+  background: #efefef;
+}
+
+.search-input .icon{
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  height: 55px;
+  width: 55px;
+  text-align: center;
+  line-height: 55px;
+  font-size: 20px;
+  color: #644bff;
+  cursor: pointer;
+}
+    </style>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+  </head>
+  <body>
+    <h2 style="text-align: center;color:black;font-size:40px">Book <br>Recommendation<br>System</h2>
+    <p style="color: red;font-size:20px;text-align:center"><b>{{msg}}</b></p>
+    <form action="get_recommendations">
+      {% csrf_token %}
+    <div class="wrapper">
+      <div class="search-input">
+        <a href="" target="_blank" hidden></a>
+        <input type="text" placeholder="Type to search.." name="bname">
+        <div class="autocom-box">
+          <!-- here list are inserted from javascript -->
+        </div>
+        <div><input type="submit"></div>
+        <div class="icon"><i class="fas fa-search"></i></div>
+      </div>
+    </div>
+  </form>
+  <div class="footer">
+    
+  </div>
+    <script>
+        let suggestions = [
+"Politically Correct Bedtime Stories: Modern Tales for Our Life and Times",
+"The Poisonwood Bible: A Novel",
+"Bel Canto: A Novel",
+"One for the Money (Stephanie Plum Novels (Paperback))",
+"The Secret Garden",
+"The Tao of Pooh",
+"Girl in Hyacinth Blue",
+"Chocolat",
+"The Secret Life of Bees",
+"Three To Get Deadly : A Stephanie Plum Novel (A Stephanie Plum Novel)",
+"Full Tilt (Janet Evanovich's Full Series)",
+"Lucky : A Memoir",
+"The Dogs of Babel (Today Show Book Club #12)",
+"White Oleander : A Novel (Oprah's Book Club)",
+"White Oleander : A Novel",
+"The Jester",
+"The Lovely Bones: A Novel",
+"Me Talk Pretty One Day",
+"Naked",
+"The Hobbit : The Enchanting Prelude to The Lord of the Rings",
+"A Prayer for Owen Meany",
+"Silent Witness",
+"No Safe Place",
+"The Murder Book",
+"Middlesex: A Novel",
+"Postmortem",
+"All That Remains (Kay Scarpetta Mysteries (Paperback))",
+"The Rainmaker",
+"Tuesdays with Morrie: An Old Man, a Young Man, and Life's Greatest Lesson",
+"Into the Wild",
+"Oryx and Crake",
+"The Da Vinci Code",
+"Lord of the Flies",
+"Watchers",
+"Mortal Fear",
+"Lightning",
+"The Cardinal of the Kremlin (Jack Ryan Novels)",
+"Rules of Prey",
+"Mind Prey",
+"From Potter's Field",
+"Contagion",
+"Cause of Death",
+"Certain Prey",
+"Black Notice",
+"Harry Potter and the Chamber of Secrets (Book 2)",
+"Harry Potter and the Prisoner of Azkaban (Book 3)",
+"Harry Potter and the Sorcerer's Stone (Book 1)",
+"The Promise",
+"Secrets",
+"Wanderlust",
+"Guardian Angel",
+"Vanished",
+"The Partner",
+"The Street Lawyer",
+"Tell No One",
+"The Summons",
+"Presumed Innocent",
+"Blood Work",
+"Hide &amp; Seek",
+"Jack &amp; Jill (Alex Cross Novels)",
+"Unspeakable",
+"Saving Faith",
+"Violets Are Blue",
+"J Is for Judgment",
+"K Is for Killer (Kinsey Millhone Mysteries (Paperback))",
+"Misery",
+"Dolores Claiborne",
+"The Edge",
+"Heaven and Earth (Three Sisters Island Trilogy)",
+"Hemlock Bay",
+"The Prince of Tides",
+"D Is for Deadbeat (Kinsey Millhone Mysteries (Paperback))",
+"Where the Red Fern Grows",
+"E Is for Evidence: A Kinsey Millhone Mystery (Kinsey Millhone Mysteries (Paperback))",
+"B Is for Burglar (Kinsey Millhone Mysteries (Paperback))",
+"C Is for Corpse (Kinsey Millhone Mysteries (Paperback))",
+"Long After Midnight",
+"The Alienist",
+"One Door Away from Heaven",
+"Reap the Wind",
+"By the Light of the Moon",
+"The Sweet Potato Queens' Book of Love",
+"Two for the Dough",
+"The God of Small Things",
+"Flesh and Blood",
+"A Year in Provence",
+"Midnight in the Garden of Good and Evil",
+"Angela's Ashes (MMP) : A Memoir",
+"The Sands of Time",
+"If Only It Were True",
+"Pay It Forward",
+"The Kitchen God's Wife",
+"Saint Maybe",
+"A Patchwork Planet",
+"Wild Animus",
+"Tears of the Giraffe (No.1 Ladies Detective Agency)",
+"The No. 1 Ladies' Detective Agency (Today Show Book Club #8)",
+"The Queen of the Damned (Vampire Chronicles (Paperback))",
+"While I Was Gone",
+"Night Prey",
+"Chromosome 6",
+"Point of Origin",
+"The Testament",
+"When the Wind Blows",
+"A Thousand Acres (Ballantine Reader's Circle)",
+"All Creatures Great and Small",
+"Ashes to Ashes",
+"Fear Nothing",
+"Seize the Night",
+"She's Come Undone (Oprah's Book Club (Paperback))",
+"I'll Be Seeing You",
+"Artemis Fowl (Artemis Fowl, Book 1)",
+"The Five People You Meet in Heaven",
+"All I Really Need to Know",
+"Disclosure",
+"Dark Rivers of the Heart",
+"Whirlwind (Tyler, Book 1)",
+"Rainbow Six",
+"Mystic River",
+"Shadow Prey",
+"The Sum of All Fears (Jack Ryan Novels)",
+"Tom Clancy's Op-Center (Tom Clancy's Op Center (Paperback))",
+"Hornet's Nest",
+"A Time to Kill",
+"Heartbeat",
+"The Client",
+"The Pelican Brief",
+"Smilla's Sense of Snow",
+"The Horse Whisperer",
+"2nd Chance",
+"Alaska",
+"Pet Sematary",
+"Four Past Midnight",
+"Fat Tuesday",
+"Hideaway",
+"We'll Meet Again",
+"Mercy",
+"Men Are from Mars, Women Are from Venus: A Practical Guide for Improving Communication and Getting What You Want in Your Relationships",
+"Charlotte's Web (Trophy Newbery)",
+"Songs in Ordinary Time (Oprah's Book Club (Paperback))",
+"At Home in Mitford (The Mitford Years)",
+"Matilda",
+"The Little Prince",
+"Coming Home",
+"Welcome to Temptation",
+"The Vampire Lestat (Vampire Chronicles, Book II)",
+"Beloved",
+"The Princess Bride: S Morgenstern's Classic Tale of True Love and High Adventure",
+"Foucault's Pendulum",
+"Rising Sun",
+"Degree of Guilt",
+"Icebound",
+"The Witching Hour (Lives of the Mayfair Witches)",
+"The Tale of the Body Thief (Vampire Chronicles (Paperback))",
+"Sleepers",
+"The Genesis Code",
+"Irish Hearts",
+"A Man in Full",
+"A Lesson Before Dying (Vintage Contemporaries (Paperback))",
+"Ellen Foster",
+"A Heartbreaking Work of Staggering Genius",
+"Watership Down",
+"The Thorn Birds",
+"Dr. Atkins' New Diet Revolution",
+"American Gods",
+"The Book of Ruth (Oprah's Book Club (Paperback))",
+"No Greater Love",
+"Like Water for Chocolate: A Novel in Monthly Installments, With Recipes, Romances, and Home Remedies",
+"Into Thin Air : A Personal Account of the Mt. Everest Disaster",
+"A Painted House",
+"Balzac and the Little Chinese Seamstress : A Novel",
+"The Phantom Tollbooth",
+"Dragon Tears",
+"Midnight",
+"The Hunt for Red October",
+"Turtle Moon",
+"Fatal Cure",
+"The Body Farm",
+"Acceptable Risk",
+"Invasion",
+"Sudden Prey",
+"Executive Orders (Jack Ryan Novels)",
+"Breathing Lessons",
+"Big Trouble",
+"Purity in Death",
+"Family Album",
+"Red Dragon",
+"Daddy",
+"The Firm",
+"A Wrinkle in Time",
+"The Chamber",
+"Five Days in Paris",
+"The Return Journey",
+"Mirror Image",
+"Summer Sisters",
+"Tara Road",
+"The Brethren",
+"The Kiss",
+"To Kill a Mockingbird",
+"Scarlett : The Sequel to Margaret Mitchell's \Gone With the Wind\"",
+"Along Came a Spider (Alex Cross Novels)",
+"The General's Daughter",
+"The Witness",
+"The Bridges of Madison County",
+"The Notebook",
+"Message in a Bottle",
+"Slow Waltz in Cedar Bend",
+"Primary Colors: A Novel of Politics",
+"A Walk to Remember",
+"Standoff",
+"Where the Heart Is (Oprah's Book Club (Paperback))",
+"Master of the Game",
+"Catering to Nobody",
+"Christine",
+"Different Seasons",
+"Over the Edge",
+"The Dead Zone",
+"The Tommyknockers",
+"The Gunslinger (The Dark Tower, Book 1)",
+"Needful Things",
+"Gerald's Game",
+"The Door to December",
+"A Case of Need",
+"Insomnia",
+"The Deep End of the Ocean",
+"Beloved (Plume Contemporary Fiction)",
+"The Reef",
+"Jewels of the Sun (Irish Trilogy)",
+"River's End",
+"Tears of the Moon (Irish Trilogy)",
+"Carolina Moon",
+"Dance upon the Air (Three Sisters Island Trilogy)",
+"The Regulators",
+"Couplehood",
+"I Know Why the Caged Bird Sings",
+"Night",
+"F Is for Fugitive (Kinsey Millhone Mysteries (Paperback))",
+"Night Sins",
+"The Cereal Murders",
+"The Clinic (Alex Delaware Novels (Paperback))",
+"False Memory",
+"Lake Wobegon Days",
+"The First Wives Club Movie Tie In",
+"My Gal Sunday",
+"Hearts In Atlantis",
+"Night Whispers",
+"Waiting to Exhale",
+"The Color Purple",
+"GARDEN OF SHADOWS (Dollanger Saga (Paperback))",
+"Dawn (Cutler)",
+"Loves Music, Loves to Dance",
+"Moonlight Becomes You",
+"A Cry In The Night",
+"Sole Survivor",
+"If Tomorrow Comes",
+"Dreamcatcher",
+"Daddy's Little Girl",
+"Don't Stand Too Close to a Naked Man",
+"Dangerous",
+"Call of the Wild",
+"The Alchemist: A Fable About Following Your Dream",
+"Bridget Jones's Diary",
+"Bridget Jones: The Edge of Reason",
+"The Hours: A Novel",
+"The Catcher in the Rye",
+"The Mists of Avalon",
+"The Cider House Rules",
+"Table For Two",
+"House of Sand and Fog",
+"The Amber Spyglass (His Dark Materials, Book 3)",
+"The Golden Compass (His Dark Materials, Book 1)",
+"The Subtle Knife (His Dark Materials, Book 2)",
+"Neverwhere",
+"Coraline",
+"Like Water for Chocolate : A Novel in Monthly Installments with Recipes, Romances, and Home Remedies",
+"The Bonesetter's Daughter",
+"The Accidental Tourist",
+"Harry Potter and the Goblet of Fire (Book 4)",
+"Harry Potter and the Order of the Phoenix (Book 5)",
+"Circle of Friends",
+"Good Omens",
+"Neuromancer (Remembering Tomorrow)",
+"A Bend in the Road",
+"Thinner",
+"The Dark Half",
+"1984",
+"Animal Farm",
+"Girl with a Pearl Earring",
+"Rising Tides",
+"Face the Fire (Three Sisters Island Trilogy)",
+"The Clan of the Cave Bear (Earth's Children (Paperback))",
+"The Valley of Horses",
+"Sacred Sins",
+"The Fellowship of the Ring (The Lord of the Rings, Part 1)",
+"The Two Towers (The Lord of the Rings, Part 2)",
+"She's Come Undone (Oprah's Book Club)",
+"Possession : A Romance",
+"Snow Falling on Cedars",
+"ANGELA'S ASHES",
+"The Shipping News : A Novel",
+"The Joy Luck Club",
+"The Eight",
+"The Apprentice",
+"Skipping Christmas",
+"Southern Cross",
+"Isle of Dogs",
+"The Gift",
+"The Runaway Jury",
+"The King of Torts",
+"Roses Are Red (Alex Cross Novels)",
+"Cradle and All",
+"The Handmaid's Tale",
+"The Bourne Supremacy",
+"The Bourne Ultimatum",
+"Dust to Dust",
+"Touching Evil",
+"The Hitchhiker's Guide to the Galaxy",
+"Midnight in the Garden of Good and Evil: A Savannah Story",
+"Nickel and Dimed: On (Not) Getting By in America",
+"Stupid White Men ...and Other Sorry Excuses for the State of the Nation!",
+"Five Quarters of the Orange",
+"Congo",
+"Intensity",
+"It's Always Something",
+"Strangers",
+"The Copper Beech",
+"The Giver (21st Century Reference)",
+"The Glass Lake",
+"The Long Road Home",
+"Tales of a Fourth Grade Nothing",
+"Seabiscuit: An American Legend",
+"A Is for Alibi (Kinsey Millhone Mysteries (Paperback))",
+"SHIPPING NEWS",
+"Lucky Man: A Memoir",
+"Angels",
+"The Color of Water: A Black Man's Tribute to His White Mother",
+"Year of Wonders",
+"Jurassic Park",
+"Drowning Ruth",
+"Breath, Eyes, Memory",
+"Stillwatch",
+"A Man Named Dave: A Story of Triumph and Forgiveness",
+"The Robber Bride",
+"Watermelon",
+"The Boy Next Door",
+"The Poisonwood Bible",
+"The Divine Secrets of the Ya-Ya Sisterhood: A Novel",
+"Divine Secrets of the Ya-Ya Sisterhood: A Novel",
+"Little Altars Everywhere: A Novel",
+"Wicked: The Life and Times of the Wicked Witch of the West",
+"Confessions of an Ugly Stepsister : A Novel",
+"Angus, Thongs and Full-Frontal Snogging: Confessions of Georgia Nicolson",
+"Fried Green Tomatoes at the Whistle Stop Cafe",
+"The Girls' Guide to Hunting and Fishing",
+"The Nanny Diaries: A Novel",
+"Interview with the Vampire",
+"How to Make an American Quilt",
+"Timeline",
+"Vittorio the Vampire: New Tales of the Vampires",
+"Big Cherry Holler: A Big Stone Gap Novel (Ballantine Reader's Circle)",
+"Plainsong (Vintage Contemporaries)",
+"Midwives: A Novel",
+"Empire Falls",
+"Last Chance Saloon",
+"Confessions of a Shopaholic (Summer Display Opportunity)",
+"Shopaholic Takes Manhattan (Summer Display Opportunity)",
+"The Talisman",
+"Abduction",
+"Hannibal",
+"Daisy Fay and the Miracle Man",
+"The Alibi",
+"The Honk and Holler Opening Soon",
+"Zen and the Art of Motorcycle Maintenance: An Inquiry into Values",
+"Winter Moon",
+"Body of Lies",
+"Temptation",
+"While My Pretty One Sleeps",
+"A Civil Action",
+"Good in Bed",
+"Jemima J: A Novel About Ugly Ducklings and Swans",
+"Don't Sweat the Small Stuff and It's All Small Stuff : Simple Ways to Keep the Little Things from Taking Over Your Life (Don't Sweat the Small Stuff Series)",
+"Welcome to the World, Baby Girl!",
+"Tribulation Force: The Continuing Drama of Those Left Behind (Left Behind No. 2)",
+"Nicolae: The Rise of Antichrist (Left Behind No. 3)",
+"What to Expect When You're Expecting (Revised Edition)",
+"Beach House",
+"Chicken Soup for the Soul (Chicken Soup for the Soul)",
+"Chicken Soup for the Woman's Soul (Chicken Soup for the Soul Series (Paper))",
+"Fahrenheit 451",
+"The Bean Trees",
+"Brave New World",
+"Life of Pi",
+"River, Cross My Heart",
+"A Widow for One Year",
+"The Bluest Eye",
+"Blessings",
+"The Reader",
+"Vinegar Hill (Oprah's Book Club (Paperback))",
+"One True Thing",
+"Charming Billy",
+"The Pull of the Moon",
+"Song of Solomon (Oprah's Book Club (Paperback))",
+"We Were the Mulvaneys",
+"Falling Angels",
+"The Bonfire of the Vanities",
+"Harry Potter and the Sorcerer's Stone (Harry Potter (Paperback))",
+"Bridget Jones : The Edge of Reason",
+"Jewel",
+"Range of Motion",
+"Angela's Ashes: A Memoir",
+"STONES FROM THE RIVER",
+"Mother of Pearl",
+"Peace Like a River",
+"I Know This Much Is True",
+"The Red Tent (Bestselling Backlist)",
+"The Hours : A Novel",
+"The Amazing Adventures of Kavalier &amp; Clay",
+"The Virgin Suicides",
+"Girl, Interrupted",
+"Cold Mountain",
+"About a Boy",
+"High Fidelity",
+"How to Be Good",
+"Fast Food Nation: The Dark Side of the All-American Meal",
+"The Perfect Storm : A True Story of Men Against the Sea",
+"The Bad Beginning (A Series of Unfortunate Events, Book 1)",
+"The Reptile Room (A Series of Unfortunate Events, Book 2)",
+"Slammerkin",
+"The Crimson Petal and the White",
+"Seven Up (A Stephanie Plum Novel)",
+"Full House (Janet Evanovich's Full Series)",
+"The Lost World",
+"The Angel of Darkness",
+"Seabiscuit",
+"Body of Evidence (Kay Scarpetta Mysteries (Paperback))",
+"Cruel &amp; Unusual (Kay Scarpetta Mysteries (Paperback))",
+"Lamb : The Gospel According to Biff, Christ's Childhood Pal",
+"The Wedding",
+"The Blind Assassin",
+"The Hot Zone",
+"The Devil Wears Prada : A Novel",
+"Without Remorse",
+"Fatherhood",
+"The Smoke Jumper",
+"Nerd in Shining Armor",
+"Holes (Yearling Newbery)",
+"Dude, Where's My Country?",
+"Sick Puppy",
+"The Rescue",
+"L Is for Lawless",
+"Homecoming",
+"The Most Wanted",
+"4 Blondes",
+"The Bourne Identity",
+"CAT'S EYE",
+"Dying for Chocolate (Culinary Mysteries (Paperback))",
+"The Grilling Season",
+"Prime Cut",
+"Tough Cookie",
+"Jewel (Oprah's Book Club)",
+"FORREST GUMP (Movie Tie in)",
+"All the Pretty Horses (The Border Trilogy, Vol 1)",
+"The English Patient",
+"The Diary of Ellen Rimbauer: My Life at Rose Red",
+"It Was on Fire When I Lay Down on It",
+"The Hundred Secret Senses",
+"Ender's Game (Ender Wiggins Saga (Paperback))",
+"Morality for Beautiful Girls (No.1 Ladies Detective Agency)",
+"Pop Goes the Weasel",
+"Unnatural Exposure",
+"The Last Precinct",
+"Pleading Guilty",
+"Kiss the Girls",
+"Exclusive",
+"A Darkness More Than Night",
+"A Thin Dark Line (Mysteries &amp; Horror)",
+"You Belong To Me",
+"Death du Jour",
+"All Around the Town",
+"Eyes of a Child",
+"Love in the Time of Cholera (Penguin Great Books of the 20th Century)",
+"Icy Sparks",
+"Four To Score (A Stephanie Plum Novel)",
+"High Five (A Stephanie Plum Novel)",
+"Hot Six : A Stephanie Plum Novel (A Stephanie Plum Novel)",
+"Big Stone Gap: A Novel (Ballantine Reader's Circle)",
+"The Surgeon",
+"Three Junes",
+"Sisterhood of the Traveling Pants",
+"Q Is for Quarry",
+"Outlander",
+"1st to Die: A Novel",
+"Suzanne's Diary for Nicholas",
+"The Green Mile",
+"Schindler's List",
+"Miss Julia Speaks Her Mind : A Novel",
+"The Other Boleyn Girl",
+"Everything's Eventual : 14 Dark Tales",
+"Prodigal Summer",
+"Pigs in Heaven",
+"The Saving Graces: A Novel",
+"Jacob Have I Loved",
+"Crazy for You",
+"September",
+"The Weight of Water : A Novel Tag: Author of Resistance and Strange Fits of Passion",
+"Fortune's Rocks: A Novel",
+"What Looks Like Crazy On An Ordinary Day",
+"Evening Class",
+"Shopaholic Ties the Knot",
+"Beach Music",
+"Sanctuary",
+"Echoes",
+"The Burden of Proof",
+"Four Blind Mice",
+"Scarlet Feather",
+"Quentins",
+"Sticks &amp; Scones",
+"Wifey",
+"Smart Women",
+"Under the Tuscan Sun",
+"84 Charing Cross Road",
+"Hard Eight : A Stephanie Plum Novel (A Stephanie Plum Novel)",
+"To the Nines: A Stephanie Plum Novel",
+"Fast Women",
+"One for the Money (A Stephanie Plum Novel)",
+"The Pilot's Wife : A Novel",
+"The Last Time They Met : A Novel",
+"Gorky Park",
+"Cold Mountain : A Novel",
+"White Teeth: A Novel",
+"The Idiot Girls' Action Adventure Club",
+"A Map of the World",
+"Atonement : A Novel",
+"Blue Diary",
+"Devices and Desires",
+"The Celestine Prophecy (Celestine Prophecy)",
+"The Beach House",
+"N Is for Noose",
+"Moo",
+"Ladder of Years",
+"How Stella Got Her Groove Back",
+"Bastard Out of Carolina",
+"Paradise",
+"Final Target",
+"Notes from a Small Island",
+"Fall On Your Knees (Oprah #45)",
+"In Her Shoes : A Novel",
+"Secret History",
+"A Fine Balance",
+"Fingersmith",
+"Sea Glass: A Novel",
+"Killjoy",
+"Accident",
+"Bleachers",
+"Choke",
+"Small Town Girl",
+"Fine Things",
+"Black and Blue",
+"Envy",
+"The Guardian",
+"Nights in Rodanthe",
+"Nightmares &amp; Dreamscapes",
+"From the Corner of His Eye",
+"Back Roads",
+"On the Street Where You Live",
+"The Summerhouse",
+"The Little Friend",
+"The Woman Next Door",
+"Remember Me",
+"Bridge to Terabithia",
+"I Capture the Castle",
+"Silence of the Lambs",
+"Fortune's Rocks : A Novel",
+"Rebecca",
+"Like Water for Chocolate: A Novel in Monthly Installments With Recipes, Romances and Home Remedies",
+"Clear and Present Danger (Jack Ryan Novels)",
+"Chosen Prey",
+"Shell Seekers",
+"Absolute Power",
+"Is for Outlaw",
+"G Is for Gumshoe (Kinsey Millhone Mysteries (Paperback))",
+"H Is for Homicide (Kinsey Millhone Mysteries (Paperback))",
+"Pride and Prejudice",
+"Anne of Green Gables (Anne of Green Gables Novels (Paperback))",
+"Anne of Avonlea (Anne of Green Gables Novels (Paperback))",
+"The House of the Spirits",
+"The Blue Nowhere : A Novel",
+"WLD ACCORDNG GARP",
+"The Lottery Winner : Alvirah And Willy Stories",
+"A Child Called \It\": One Child's Courage to Survive",
+"The Lost Boy: A Foster Child's Search for the Love of a Family",
+"The Stone Diaries",
+"The Rapture of Canaan",
+"Dragonfly in Amber",
+"The Loop",
+"Cold Sassy Tree",
+"Anne of the Island",
+"Faking It",
+"Tell Me Lies (Tell Me Lies)",
+"The Bachelor (Warner Books Contemporary Romance)",
+"Dances With Wolves",
+"Impulse",
+"Winter Solstice",
+"Sophie's World: A Novel About the History of Philosophy",
+"Whispers",
+"The Winner",
+"Dream Country",
+"Bag of Bones",
+"Seven Habits Of Highly Effective People",
+"Dark Paradise",
+"A Day Late and a Dollar Short",
+"Angels &amp; Demons",
+"Digital Fortress : A Thriller",
+"Black House",
+"Easy Prey",
+"Eyes of Prey",
+"Mortal Prey",
+"Message from Nam",
+"It",
+"Cujo",
+"The Drawing of the Three (The Dark Tower, Book 2)",
+"Skeleton Crew",
+"Desperation",
+"Sphere",
+"The Mummy or Ramses the Damned",
+"The Andromeda Strain",
+"Violin",
+"Shattered",
+"Phantoms",
+"Shadowfires",
+"Slaughterhouse Five or the Children's Crusade: A Duty Dance With Death",
+"Carrie",
+"The Fourth Hand",
+"That Camden Summer",
+"Here on Earth",
+"P Is for Peril",
+"Anne Frank: The Diary of a Young Girl",
+"Contact",
+"Animal Dreams",
+"Monster : A Novel (Alex Delaware Novels (Paperback))",
+"A Virtuous Woman (Oprah's Book Club (Paperback))",
+"The Bad Place",
+"Betrayal in Death",
+"Weep No More My Lady",
+"Granny Dan",
+"The First Counsel",
+"I Is for Innocent",
+"Guilty as Sin",
+"The Temple of My Familiar",
+"Airframe",
+"Tis : A Memoir",
+"The Terminal Man",
+"I Know This Much Is True (Oprah's Book Club)",
+"Prodigal Summer: A Novel",
+"Colony",
+"The Eyre Affair: A Novel",
+"Void Moon",
+"Servant of the Bones",
+"Taltos: Lives of the Mayfair Witches",
+"Billy Straight : A Novel",
+"Drowning Ruth (Oprah's Book Club)",
+"Truly, Madly Manhattan",
+"Engaging The Enemy",
+"Summer Pleasures",
+"Macgregor Brides (Macgregors)",
+"Macgregor Grooms (Macgregors)",
+"Stanislaski Brothers (Silhouette Promo)",
+"Second Nature",
+"Journey",
+"The Ghost",
+"The Return of the King (The Lord of the Rings, Part 3)",
+"Mr. Murder",
+"Practical Magic",
+"Vector",
+"Riptide",
+"The Villa",
+"Midnight Bayou",
+"Three Fates",
+"Red Storm Rising",
+"Patriot Games (Jack Ryan Novels)",
+"Debt of Honor (Jack Ryan Novels)",
+"Toxin",
+"Portrait in Death",
+"The Cradle Will Fall",
+"Kaleidoscope",
+"Zoya",
+"The Carousel",
+"Voyager",
+"Nothing Lasts Forever",
+"Last Man Standing",
+"The Switch",
+"Wish You Well",
+"Plum Island",
+"Cat &amp; Mouse (Alex Cross Novels)",
+"Tell Me Your Dreams",
+"The Simple Truth",
+"M Is for Malice",
+"The Pillars of the Earth",
+"Wizard and Glass (The Dark Tower, Book 4)",
+"Montana Sky",
+"Sea Swept (Quinn Brothers (Paperback))",
+"Inner Harbor (Quinn Brothers (Paperback))",
+"Homeport",
+"Heart of the Sea (Irish Trilogy)",
+"Key of Light (Key Trilogy (Paperback))",
+"Key of Knowledge (Key Trilogy (Paperback))",
+"Key of Valor (Roberts, Nora. Key Trilogy, 3.)",
+"Wuthering Heights",
+"A Great Deliverance",
+"The Plains of Passage (Earth's Children (Paperback))",
+"Carnal Innocence",
+"Cry Wolf",
+"The Ugly Duckling",
+"The Face of Deception",
+"The Next Accident",
+"The Killing Game: Only One Can Win...and the Loser Dies",
+"The Search",
+"Before I Say Good-Bye",
+"Deja Dead",
+"Forever... : A Novel of Good and Evil, Love and Hope",
+"The Mulberry Tree",
+"The Empty Chair",
+"Deception Point",
+"Heartbreaker",
+"Now You See Her",
+"The Girl Who Loved Tom Gordon",
+"Harvest",
+"Let Me Call You Sweetheart",
+"The Great Gatsby",
+"Tis: A Memoir",
+"Deck the Halls (Holiday Classics)",
+"The Shining",
+"Left Behind: A Novel of the Earth's Last Days (Left Behind No. 1)",
+"Dead Run",
+"Bittersweet",
+"Rose Madder",
+"Guilty Pleasures (Anita Blake Vampire Hunter (Paperback))",
+"Drums of Autumn",
+"Birthright",
+"Pretend You Don't See Her",
+"Dark Angel",
+"Still Waters",
+"And Then You Die",
+
+];
+    </script>
+    <script>
+        // getting all required elements
+const searchWrapper = document.querySelector(".search-input");
+const inputBox = searchWrapper.querySelector("input");
+const suggBox = searchWrapper.querySelector(".autocom-box");
+const icon = searchWrapper.querySelector(".icon");
+let linkTag = searchWrapper.querySelector("a");
+let webLink;
+
+// if user press any key and release
+inputBox.onkeyup = (e)=>{
+    let userData = e.target.value; //user enetered data
+    let emptyArray = [];
+    if(userData){
+        icon.onclick = ()=>{
+            webLink = "https://www.google.com/search?q=" + userData;
+            linkTag.setAttribute("href", webLink);
+            console.log(webLink);
+            linkTag.click();
+        }
+        emptyArray = suggestions.filter((data)=>{
+            //filtering array value and user characters to lowercase and return only those words which are start with user enetered chars
+            return data.toLocaleLowerCase().startsWith(userData.toLocaleLowerCase()); 
+        });
+        emptyArray = emptyArray.map((data)=>{
+            // passing return data inside li tag
+            return data = '<li>'+ data +'</li>';
+        });
+        searchWrapper.classList.add("active"); //show autocomplete box
+        showSuggestions(emptyArray);
+        let allList = suggBox.querySelectorAll("li");
+        for (let i = 0; i < allList.length; i++) {
+            //adding onclick attribute in all li tag
+            allList[i].setAttribute("onclick", "select(this)");
+        }
+    }else{
+        searchWrapper.classList.remove("active"); //hide autocomplete box
+    }
+}
+
+function select(element){
+    let selectData = element.textContent;
+    inputBox.value = selectData;
+    icon.onclick = ()=>{
+        webLink = "https://www.google.com/search?q=" + selectData;
+        linkTag.setAttribute("href", webLink);
+        linkTag.click();
+    }
+    searchWrapper.classList.remove("active");
+}
+
+function showSuggestions(list){
+    let listData;
+    if(!list.length){
+        userValue = inputBox.value;
+        listData = '<li>'+ userValue +'</li>';
+    }else{
+        listData = list.join('');
+    }
+    suggBox.innerHTML = listData;
+}
+    </script>
+
+  </body>
+</html>
